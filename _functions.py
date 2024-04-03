@@ -112,13 +112,15 @@ class AsyncRequestClient():
 def form_dataset(obj:Annotation, key:str, field_id:str)->pd.DataFrame:
     temp_list = []
     datapoints = obj.find_by_schema_id(obj.content_data, field_id)
+    print(datapoints, key)
     if datapoints:
         for datapoint in datapoints:            
             content_value = datapoint["content"]["value"]
             temp_list.append({"IDs":key, field_id:content_value})
         temp_df = pd.DataFrame(temp_list)
         temp_df.set_index("IDs", inplace=True)
-        return temp_df 
+        return temp_df
+    return pd.DataFrame() 
 
 def show_results(field_ids, annotations_collection, base_url)-> display:    
     output = pd.DataFrame()
@@ -131,13 +133,15 @@ def show_results(field_ids, annotations_collection, base_url)-> display:
             output = pd.concat([output,temp_merged_df])
         else:            
             output = pd.concat([output,form_dataset(obj,key, field_ids[0])])
-    
+                        
     def make_clickable(url):
         return f'<a href="{url}" target="_blank">link</a>'
     
     styled_output = output.style.format({'Address': make_clickable})    
     display(styled_output)
-                
+    
+
+
 # Function to create input widgets for a given set number
 def create_input_widgets():      
     token_input = widgets.Textarea(value="", description=f"TOKEN:")
@@ -150,10 +154,9 @@ def create_input_widgets():
                         )
     bool_toggle = widgets.ToggleButtons(
                     options=[True, False],
-                    description='Load all pages of annotations:',
-                    button_style='info', # 'success', 'info', 'warning', 'danger' or ''
+                    description='Load all pages of annotations:',                    
                     tooltips=['True', 'False'],
-                    value=False # Default value
+                    value=False # Default value                
                 )
     
     options_with_labels = {'prod-eu': 'https://elis.rossum.ai', 'prod-jp': 'https://shared-jp.app.rossum.ai', 
@@ -167,17 +170,17 @@ def create_input_widgets():
 
 
 async def process_annotations(client, token_input, url_input, query, field_ids, bool_toggle, dropdown):
-    query_string = query.value.replace("\n", "")
-    field_ids = field_ids.value.split(',')    
+    #query_string = query.value.replace("\n", "")
+    #field_ids = field_ids.value.split(',')    
 
     if dropdown.label == "prod-eu2":
         url = f'https://{url_input.value}{dropdown.value}'
-        client.reset_inputs(token_input.value, f'{url}/api')
+        client.reset_inputs(token_input, f'{url}/api')
     else:
         url = f'{dropdown.value}'
-        client.reset_inputs(token_input.value, f'{url}/api')
+        client.reset_inputs(token_input, f'{url}/api')
 
-    annotations_collection = await client.search_with_query(json.loads(query_string), allPages=bool_toggle.value)
+    annotations_collection = await client.search_with_query(query, allPages=bool_toggle.value)
 
     # Create a list of coroutines for fetching annotation content
     annotation_tasks = [client._get_annotation_content(key) for key in annotations_collection.keys()]
@@ -192,4 +195,4 @@ async def process_annotations(client, token_input, url_input, query, field_ids, 
         content= content["content"]
         obj.set_content(content)
 
-    show_results(field_ids, annotations_collection, base_url=f'{url}/document')                
+    show_results(field_ids, annotations_collection, base_url=f'{url}/document')
