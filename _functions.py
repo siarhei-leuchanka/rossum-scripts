@@ -15,6 +15,22 @@ class Annotation():
 
     def set_content(self, annotation:list) -> None:
         self.content_data = annotation
+        
+    def find_by_schema_id(self, content, schema_id: str):
+        """
+        Return all datapoints matching a schema id.
+        :param content: annotation content tree 
+        :param schema_id: f
+        :return: the list of datapoints matching the schema ID
+        """
+        accumulator = []
+        for node in content:
+            if node["schema_id"] == schema_id:
+                accumulator.append(node)
+            elif "children" in node:
+                accumulator.extend(self.find_by_schema_id(node["children"], schema_id))
+
+        return accumulator
 
 
 class AsyncRequestClient():    
@@ -93,51 +109,40 @@ class AsyncRequestClient():
                                     
         return annotation_library
 
+def form_dataset(obj:Annotation, key:str, field_id:str)->pd.DataFrame:
+    temp_list = []
+    datapoints = obj.find_by_schema_id(obj.content_data, field_id)
+    if datapoints:
+        for datapoint in datapoints:            
+            content_value = datapoint["content"]["value"]
+            temp_list.append({"IDs":key, field_id:content_value})
+        temp_df = pd.DataFrame(temp_list)
+        temp_df.set_index("IDs", inplace=True)
+        return temp_df 
 
-def find_by_schema_id(content, schema_id: str):
-    """
-    Return all datapoints matching a schema id.
-    :param content: annotation content tree 
-    :param schema_id: f
-    :return: the list of datapoints matching the schema ID
-    """
-    accumulator = []
-    for node in content:
-        if node["schema_id"] == schema_id:
-            accumulator.append(node)
-        elif "children" in node:
-            accumulator.extend(find_by_schema_id(node["children"], schema_id))
-
-    return accumulator
-
-
-def show_results(field_id, annotations_collection, base_url):
-    df_list = []
-    for key in annotations_collection.keys():
-        annotation = annotations_collection[key].content_data
-      
-        datapoints = find_by_schema_id(annotation, field_id)
-        if datapoints:
-            for datapoint in datapoints:
-                time_spent_overall = datapoint["time_spent_overall"]
-                validation_sources = datapoint["validation_sources"]
-                content_value = datapoint["content"]["value"]
-                
-                df_list.append({"IDs":f"{base_url}/{key}", "value":content_value, "validation_sources":validation_sources, "time_spent_overall":time_spent_overall})    
-
-    output = pd.DataFrame(df_list)
-    def make_clickable(url):
-        return f'<a href="{url}" target="_blank">{url}</a>'
-    styled_output = output.style.format({'IDs': make_clickable})
+def show_results(field_ids, annotations_collection, base_url)-> display:    
+    output = pd.DataFrame()
+    for key, obj in annotations_collection.items():
+        if len(field_ids) > 1:
+            temp_merged_df = pd.DataFrame([{"IDs":key, "Address":f"{base_url}/{key}"}])
+            temp_merged_df.set_index("IDs", inplace=True)            
+            for field_id in field_ids:
+                temp_merged_df = temp_merged_df.merge(form_dataset(obj,key,field_id), how='outer',left_index=True, right_index=True)
+            output = pd.concat([output,temp_merged_df])
+        else:            
+            output = pd.concat([output,form_dataset(obj,key, field_ids[0])])
     
+    def make_clickable(url):
+        return f'<a href="{url}" target="_blank">link</a>'
+    
+    styled_output = output.style.format({'Address': make_clickable})    
     display(styled_output)
-
-
+                
 # Function to create input widgets for a given set number
 def create_input_widgets():      
     token_input = widgets.Textarea(value="", description=f"TOKEN:")
     url_input = widgets.Textarea(value="", description=f"Custom Domain:")    
-    field_id = widgets.Textarea(value="document_id", description = "Field ID to check")
+    field_ids = widgets.Textarea(value="document_id", description = "Field ID to check")
     query = widgets.Textarea(
                     value= '{\n    "query": {\n        "$and": [\n            {\n                "queue": {\n                    "$in": [\n                        "https://elis.rossum.ai/api/v1/queues/XXXXXX",\n                        "https://elis.rossum.ai/api/v1/queues/XXXXXX",\n                        "https://elis.rossum.ai/api/v1/queues/XXXXXX"\n                    ]\n                }\n            },\n            {\n                "field.document_id.string": {\n                    "$emptyOrMissing": false\n                }\n            },\n            {\n                "status": {\n                    "$in": [\n                        "confirmed",\n                        "exported"\n                    ]\n                }\n            }\n        ]\n    }\n}',
                     description='Filter Query',
@@ -157,19 +162,17 @@ def create_input_widgets():
                 options=options_with_labels,
                 description='Environment:'
                 )
-    
-    # confirm_button = widgets.Button(description="Start")
 
-    return token_input, url_input, query, field_id, bool_toggle, dropdown
+    return token_input, url_input, query, field_ids, bool_toggle, dropdown
 
 
-async def process_annotations(client, token_input, url_input, query, field_id, bool_toggle, dropdown):
+async def process_annotations(client, token_input, url_input, query, field_ids, bool_toggle, dropdown):
     query_string = query.value.replace("\n", "")
-    
+    field_ids = field_ids.value.split(',')    
+
     if dropdown.label == "prod-eu2":
-        url = f'https://{url_input.value}{dropdown.value}/api'
-        print(url)
-        client.reset_inputs(token_input.value, url)
+        url = f'https://{url_input.value}{dropdown.value}'
+        client.reset_inputs(token_input.value, f'{url}/api')
     else:
         url = f'{dropdown.value}'
         client.reset_inputs(token_input.value, f'{url}/api')
@@ -189,4 +192,4 @@ async def process_annotations(client, token_input, url_input, query, field_id, b
         content= content["content"]
         obj.set_content(content)
 
-    show_results(field_id.value, annotations_collection, base_url=f'{url}/document')
+    show_results(field_ids, annotations_collection, base_url=f'{url}/document')                
