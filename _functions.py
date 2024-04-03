@@ -112,7 +112,6 @@ class AsyncRequestClient():
 def form_dataset(obj:Annotation, key:str, field_id:str)->pd.DataFrame:
     temp_list = []
     datapoints = obj.find_by_schema_id(obj.content_data, field_id)
-    print(datapoints, key)
     if datapoints:
         for datapoint in datapoints:            
             content_value = datapoint["content"]["value"]
