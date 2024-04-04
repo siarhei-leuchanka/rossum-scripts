@@ -130,8 +130,11 @@ def show_results(field_ids, annotations_collection, base_url)-> display:
             for field_id in field_ids:
                 temp_merged_df = temp_merged_df.merge(form_dataset(obj,key,field_id), how='outer',left_index=True, right_index=True)
             output = pd.concat([output,temp_merged_df])
-        else:            
-            output = pd.concat([output,form_dataset(obj,key, field_ids[0])])
+        else:
+            temp_merged_df = pd.DataFrame([{"IDs":key, "Address":f"{base_url}/{key}"}])
+            temp_merged_df.set_index("IDs", inplace=True)            
+            temp_merged_df = temp_merged_df.merge(form_dataset(obj,key,field_ids[0]), how='outer',left_index=True, right_index=True)            
+            output = pd.concat([output,temp_merged_df])
                         
     def make_clickable(url):
         return f'<a href="{url}" target="_blank">link</a>'
