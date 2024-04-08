@@ -121,3 +121,106 @@ async def process_annotations(
         obj.set_content(content)
 
     return show_results(field_ids, annotations_collection, base_url=f"{url}/document")
+
+
+async def pages_data(client, annotation_id):
+    # get all pages data:
+    pages_data = []
+    next, response = await client._get_pages(annotation_id)
+    pages_data.extend(response)
+
+    while next:
+        next, response = await client._get_pages(annotation_id, next_page=next)
+        pages_data.extend(response)
+    return pages_data
+
+
+async def annotations_position_analysis(
+    client: async_client.AsyncRequestClient,
+    token_input: str,
+    url_input: widgets,
+    query: dict,
+    bool_toggle: widgets,
+    dropdown: widgets,
+):
+    if dropdown.label == "prod-eu2":
+        url = f"https://{url_input.value}{dropdown.value}"
+        client.reset_inputs(token_input, f"{url}/api")
+    else:
+        url = f"{dropdown.value}"
+        client.reset_inputs(token_input, f"{url}/api")
+
+    # Collect annotations based on search query
+    annotations_collection = await search_with_query(
+        client, query, allPages=bool_toggle.value
+    )
+
+    # Create a list of coroutines for fetching annotation content
+    annotation_tasks = [
+        client._get_annotation_content(key) for key in annotations_collection.keys()
+    ]
+
+    # Execute all annotation content fetching tasks concurrently
+    annotation_contents = await asyncio.gather(*annotation_tasks)
+
+    # Update annotation objects with fetched content
+    for key, annotation_content in zip(
+        annotations_collection.keys(), annotation_contents
+    ):
+        obj = annotations_collection[key]
+        content = annotation_content
+        content = content["content"]
+        obj.set_content(content)
+
+    # now creating a list of new coroutines to get page data
+    pages_tasks = [pages_data(client, key) for key in annotations_collection.keys()]
+
+    # Execute all annotation content fetching tasks concurrently
+    annotation_pages = await asyncio.gather(*pages_tasks)
+
+    # Update annotation objects with fetched pages
+    for key, annotation_page in zip(annotations_collection.keys(), annotation_pages):
+        obj = annotations_collection[key]
+        obj.set_page_data = annotation_page
+
+    return annotations_collection
+
+
+def annotations_position_post_processing(
+    annotations_collection, field_id, slicer_field_id
+):
+    output = pd.DataFrame()
+    for key, obj in annotations_collection.items():
+        df = pd.DataFrame()
+        pages_df = pd.DataFrame(obj.page_data)
+        positions = obj.get_positions(field_id)
+        slicer = obj.find_by_schema_id(
+            obj.content_data, slicer_field_id
+        )  ##ugly hot fix for header only fields
+        if slicer:
+            slicer = slicer[0]
+            slicer_value = slicer.get("content", [])["value"]
+        else:
+            slicer_value = "EMPTY SLICER"
+        if positions[0].get("page", False):  # hot fix for header only fields
+            positions_df = pd.DataFrame(positions)
+            df = pd.merge(
+                positions_df[["annotation_id", "page", "x1", "y1", "x2", "y2"]],
+                pages_df[["page", "page_width", "page_height"]],
+                on="page",
+                how="left",
+            )
+
+        df["slicer"] = slicer_value
+        output = pd.concat([output, df])
+
+    # Convert coordinates to percentages
+    # Calculate center of bounding box
+    output["center_x"] = (output["x1"] + output["x2"]) / 2
+    output["center_y"] = (output["y1"] + output["y2"]) / 2
+
+    # Convert coordinates to relative percentages
+    output["center_x_percent"] = output["center_x"] / output["page_width"] * 100
+    output["center_y_percent"] = output["center_y"] / output["page_height"] * 100
+
+    return output
