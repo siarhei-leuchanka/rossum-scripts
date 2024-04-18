@@ -66,7 +66,7 @@ class AsyncRequestClient:
         return response
 
     async def _search(self, params=None, next_page=None) -> tuple:
-        endpoint = "/annotations/search"
+        endpoint = "/annotations/search?page_size=100"
         response = await self._make_request(
             "POST", endpoint, json=params, cache_on=True, ready_url=next_page
         )
