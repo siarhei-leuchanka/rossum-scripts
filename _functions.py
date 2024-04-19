@@ -33,7 +33,8 @@ def form_dataset(obj: annotation.Annotation, key: str, field_id: str) -> pd.Data
     if datapoints:
         for datapoint in datapoints:
             content_value = datapoint["content"]["value"]
-            temp_list.append({"IDs": key, field_id: content_value})
+            position_check = "  || => Manual" if not datapoint["content"].get("position", False) and content_value != "" else ""            
+            temp_list.append({"IDs": key, field_id: f"{content_value}{position_check}"})
         temp_df = pd.DataFrame(temp_list)
         temp_df.set_index("IDs", inplace=True)
         return temp_df
@@ -60,7 +61,10 @@ def show_results(
     def make_clickable(url):
         return f'<a href="{url}" target="_blank">link</a>'
 
-    styled_output = output.style.format({"Address": make_clickable})
+    styled_output = output.style
+    styled_output = styled_output.format({"Address": make_clickable})
+    styled_output = styled_output.applymap(lambda val: 'color: red' if "  || => Manual" in str(val) else '')
+    
     return display(styled_output)
 
 
