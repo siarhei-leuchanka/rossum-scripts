@@ -2,7 +2,7 @@ import rs_classes.async_request_client as async_client
 import asyncio
 
 
-async def get_annotations_page(client, annotation_id):
+async def pages_data(client, annotation_id):
     # get all pages data:
     pages_data = []
     next, response = await client._get_pages(annotation_id)
@@ -14,7 +14,7 @@ async def get_annotations_page(client, annotation_id):
     return pages_data
 
 
-async def annotations_position_analysis(
+async def get_annotations_page(
     client: async_client.AsyncRequestClient, annotations_collection: dict
 ):
     # now creating a list of new coroutines to get page data
