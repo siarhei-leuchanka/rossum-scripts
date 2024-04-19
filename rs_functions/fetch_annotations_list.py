@@ -31,9 +31,10 @@ async def get_annotations(
     token_input: str,
     url_input: widgets,
     query: dict,
+    field_ids: list,
     bool_toggle: widgets,
     dropdown: widgets,
-    page_max: int,
+    page_max: int
 ) -> dict:
     if dropdown.label == "prod-eu2":
         url = f"https://{url_input.value}{dropdown.value}"
