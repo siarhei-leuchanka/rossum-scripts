@@ -1,5 +1,5 @@
 import rs_classes.async_request_client as async_client
-import asyncio
+from rs_functions.gather_decorator import gather_throttled
 
 
 async def get_annotation_content(
@@ -11,8 +11,10 @@ async def get_annotation_content(
         client._get_annotation_content(key) for key in annotations_collection.keys()
     ]
 
-    # Execute all annotation content fetching tasks concurrently
-    annotation_contents = await asyncio.gather(*annotation_tasks)
+    # Home baked primitive throttling
+    annotation_contents = await gather_throttled(
+        annotation_tasks=annotation_tasks, sleep_limit=100, sleep_time=1
+    )
 
     # Update annotation objects with fetched content
     for key, annotation_content in zip(

@@ -1,7 +1,6 @@
 import rs_classes.async_request_client as async_client
 import rs_classes.annotation as annotation
 import json
-import pandas as pd
 import ipywidgets as widgets
 
 
@@ -34,7 +33,7 @@ async def get_annotations(
     field_ids: list,
     bool_toggle: widgets,
     dropdown: widgets,
-    page_max: int
+    page_max: int,
 ) -> dict:
     if dropdown.label == "prod-eu2":
         url = f"https://{url_input.value}{dropdown.value}"

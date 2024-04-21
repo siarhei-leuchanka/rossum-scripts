@@ -42,4 +42,3 @@ def text_value_analysis(
         output = pd.concat([output, temp_merged_df])
 
     return output
-
