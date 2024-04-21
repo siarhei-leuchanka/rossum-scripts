@@ -13,7 +13,7 @@ async def get_annotation_content(
 
     # Home baked primitive throttling
     annotation_contents = await gather_throttled(
-        annotation_tasks=annotation_tasks, sleep_limit=100, sleep_time=1
+        tasks=annotation_tasks, sleep_limit=100, sleep_time=1
     )
 
     # Update annotation objects with fetched content

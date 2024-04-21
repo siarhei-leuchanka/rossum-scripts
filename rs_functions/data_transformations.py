@@ -42,3 +42,41 @@ def text_value_analysis(
         output = pd.concat([output, temp_merged_df])
 
     return output
+
+
+def position_analysis(annotations_collection, field_id, slicer_field_id):
+    output = pd.DataFrame()
+    for key, obj in annotations_collection.items():
+        df = pd.DataFrame()
+        pages_df = pd.DataFrame(obj.page_data)
+        positions = obj.get_positions(field_id)
+        slicer = obj.find_by_schema_id(
+            obj.content_data, slicer_field_id
+        )  ##ugly hot fix for header only fields
+        if slicer:
+            slicer = slicer[0]
+            slicer_value = slicer.get("content", [])["value"]
+        else:
+            slicer_value = "EMPTY SLICER"
+        if positions[0].get("page", False):  # hot fix for header only fields
+            positions_df = pd.DataFrame(positions)
+            df = pd.merge(
+                positions_df[["annotation_id", "page", "x1", "y1", "x2", "y2"]],
+                pages_df[["page", "page_width", "page_height"]],
+                on="page",
+                how="left",
+            )
+
+        df["slicer"] = slicer_value
+        output = pd.concat([output, df])
+
+    # Convert coordinates to percentages
+    # Calculate center of bounding box
+    output["center_x"] = (output["x1"] + output["x2"]) / 2
+    output["center_y"] = (output["y1"] + output["y2"]) / 2
+
+    # Convert coordinates to relative percentages
+    output["center_x_percent"] = output["center_x"] / output["page_width"] * 100
+    output["center_y_percent"] = output["center_y"] / output["page_height"] * 100
+
+    return output

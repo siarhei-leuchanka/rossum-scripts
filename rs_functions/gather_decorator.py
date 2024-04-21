@@ -2,11 +2,11 @@ import asyncio
 from asyncio import gather
 
 
-async def gather_throttled(annotation_tasks: list, sleep_limit:int, sleep_time:int):
+async def gather_throttled(tasks: list, sleep_limit:int, sleep_time:int):
     annotation_contents = []
     task_accumulator = []
 
-    for i, arg in enumerate(annotation_tasks):
+    for i, arg in enumerate(tasks):
         task_accumulator.append(arg)
         if i % sleep_limit == 0 and i != 0:
             print("Sleeping")

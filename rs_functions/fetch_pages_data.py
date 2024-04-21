@@ -1,5 +1,6 @@
 import rs_classes.async_request_client as async_client
-import asyncio
+# import asyncio
+from rs_functions.gather_decorator import gather_throttled
 
 
 async def pages_data(client, annotation_id):
@@ -21,7 +22,12 @@ async def get_annotations_page(
     pages_tasks = [pages_data(client, key) for key in annotations_collection.keys()]
 
     # Execute all annotation content fetching tasks concurrently
-    annotation_pages = await asyncio.gather(*pages_tasks)
+    # annotation_pages = await asyncio.gather(*pages_tasks)
+    
+    # Home baked primitive throttling
+    annotation_pages = await gather_throttled(
+       tasks=pages_tasks, sleep_limit=100, sleep_time=1
+    )
 
     # Update annotation objects with fetched pages
     for key, annotation_page in zip(annotations_collection.keys(), annotation_pages):
