@@ -1,9 +1,8 @@
 import rs_classes.async_request_client as async_client
-# import asyncio
 from rs_functions.gather_decorator import gather_throttled
 
 
-async def pages_data(client, annotation_id):
+async def pages_data(client: async_client.AsyncRequestClient, annotation_id)-> list:
     # get all pages data:
     pages_data = []
     next, response = await client._get_pages(annotation_id)
@@ -17,7 +16,7 @@ async def pages_data(client, annotation_id):
 
 async def get_annotations_page(
     client: async_client.AsyncRequestClient, annotations_collection: dict
-):
+)-> dict:
     # now creating a list of new coroutines to get page data
     pages_tasks = [pages_data(client, key) for key in annotations_collection.keys()]
 

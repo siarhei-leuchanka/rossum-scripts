@@ -2,7 +2,7 @@ import asyncio
 from asyncio import gather
 
 
-async def gather_throttled(tasks: list, sleep_limit:int, sleep_time:int):
+async def gather_throttled(tasks: list, sleep_limit: int, sleep_time: int) -> dict:
     annotation_contents = []
     task_accumulator = []
 
