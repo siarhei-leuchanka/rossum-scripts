@@ -13,6 +13,9 @@ class Annotation:
 
     def set_content(self, annotation: list) -> None:
         self.content_data = annotation
+    
+    def set_meta(self, annotation: list) -> None:
+        self.meta = annotation
 
     def find_by_schema_id(self, content, schema_id: str):
         """

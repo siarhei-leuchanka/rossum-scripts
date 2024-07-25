@@ -64,6 +64,11 @@ class AsyncRequestClient:
         endpoint = f"/annotations/{annotation_id}/content"
         response = await self._make_request("GET", endpoint, cache_on=True)
         return response
+    
+    async def _get_annotation_meta(self, annotation_id):
+        endpoint = f"/annotations/{annotation_id}"
+        response = await self._make_request("GET", endpoint, cache_on=True)
+        return response
 
     async def _search(self, params=None, next_page=None) -> tuple:
         endpoint = "/annotations/search?page_size=100"

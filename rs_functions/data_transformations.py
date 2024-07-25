@@ -7,22 +7,33 @@ def form_dataset_for_text_value_analysis(
     obj: annotation.Annotation, key: str, field_id: str
 ) -> pd.DataFrame:
     temp_list = []
-    datapoints = obj.find_by_schema_id(obj.content_data, field_id)
-    if datapoints:
-        for datapoint in datapoints:
-            content_value = datapoint["content"]["value"]
-            position_check = (
-                "  || => Manual"
-                if not datapoint["content"].get("position", False)
-                and content_value != ""
-                else ""
-            )
-            temp_list.append({"IDs": key, field_id: f"{content_value}{position_check}"})
+    if field_id.split(".")[0] == "meta":
+        temp_list.append(
+            {
+                "IDs": key, 
+                field_id: obj.meta.get(field_id.split(".")[1], None)
+            }
+        )
         temp_df = pd.DataFrame(temp_list)
         temp_df.set_index("IDs", inplace=True)
         return temp_df
-    # if no datapoints return empty df
-    return pd.DataFrame()
+    else:        
+        datapoints = obj.find_by_schema_id(obj.content_data, field_id)
+        if datapoints:
+            for datapoint in datapoints:
+                content_value = datapoint["content"]["value"]
+                position_check = (
+                    "  || => Manual"
+                    if not datapoint["content"].get("position", False)
+                    and content_value != ""
+                    else ""
+                )
+                temp_list.append({"IDs": key, field_id: f"{content_value}{position_check}"})
+            temp_df = pd.DataFrame(temp_list)
+            temp_df.set_index("IDs", inplace=True)
+            return temp_df
+        # if no datapoints return empty df
+        return pd.DataFrame()
 
 
 def text_value_analysis(
