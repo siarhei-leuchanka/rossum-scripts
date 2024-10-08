@@ -29,8 +29,7 @@ class Annotation:
         return self._page_data
 
     @page_data.setter
-    def page_data(self, page_meta):
-        self.page_meta = page_meta
+    def page_data(self, page_meta):        
         for result in page_meta:
             self._page_data.append(
                 {
