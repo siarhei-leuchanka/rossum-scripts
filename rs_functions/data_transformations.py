@@ -1,6 +1,28 @@
 import pandas as pd
 from IPython.display import display
 from rs_classes import annotation as annotation
+import ipywidgets as widgets
+
+
+# Function to create input widgets for a given set number
+def create_input_widgets() -> widgets:
+    url_input = widgets.Textarea(value="", description="Custom Domain:")
+    bool_toggle = widgets.ToggleButtons(
+        options=[True, False],
+        description="Load all pages of annotations:",
+        tooltips=["True", "False"],
+        value=False,  # Default value
+    )
+
+    options_with_labels = {
+        "prod-eu": "https://elis.rossum.ai",
+        "prod-jp": "https://shared-jp.app.rossum.ai",
+        "prod-eu2": ".rossum.app",
+        "prod-us": "https://us.app.rossum.ai",
+    }
+    dropdown = widgets.Dropdown(options=options_with_labels, description="Environment:")
+
+    return url_input, bool_toggle, dropdown
 
 
 def form_dataset_for_text_value_analysis(
