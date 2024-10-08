@@ -1,37 +1,32 @@
 # annotation.py
 
-import json
-
 
 class Annotation:
-    def __init__(self, metadata: json) -> None:
-        self.metadata = metadata
-        self.id = metadata.get("id", "na")
-        self.queue = metadata.get("queue", "na").split("/")[-1]
-        self.schema = metadata.get("schema", "na").split("/")[-1]
+    def __init__(self, annotation_metadata: dict) -> None:
+        self._metadata = annotation_metadata
+        # self.id = metadata.get("id", "na")
+        # self.queue = metadata.get("queue", "na").split("/")[-1]
+        # self.schema = metadata.get("schema", "na").split("/")[-1]
         self._page_data = []
+        # self.related_email_ids = []
+        self._related_emails = []
+        self._annotation_data = None
 
-    def set_content(self, annotation: list) -> None:
-        self.content_data = annotation
-    
-    def set_meta(self, annotation: list) -> None:
-        self.meta = annotation
+    @property
+    def id(self):
+        return self.metadata.get("id", "na")
 
-    def find_by_schema_id(self, content, schema_id: str):
-        """
-        Return all datapoints matching a schema id.
-        :param content: annotation content tree
-        :param schema_id: f
-        :return: the list of datapoints matching the schema ID
-        """
-        accumulator = []
-        for node in content:
-            if node["schema_id"] == schema_id:
-                accumulator.append(node)
-            elif "children" in node:
-                accumulator.extend(self.find_by_schema_id(node["children"], schema_id))
+    @property
+    def metadata(self):
+        return self._metadata
 
-        return accumulator
+    @property
+    def queue(self):
+        return self.metadata.get("queue", "na").split("/")[-1]
+
+    @property
+    def schema(self):
+        return self.metadata.get("schema", "na").split("/")[-1]
 
     @property
     def page_data(self):
@@ -51,9 +46,55 @@ class Annotation:
                 }
             )
 
+    @property
+    def related_email_ids(self):
+        if self.metadata:
+            return [
+                email.split("/")[-1] if email else None
+                for email in self.metadata.get("related_emails", [])
+            ]
+        else:
+            return None
+
+    @property
+    def related_emails(self):
+        return self._related_emails
+
+    @related_emails.setter
+    def related_emails(self, email):
+        self._related_emails.append(email)
+        return self._related_emails
+
+    @property
+    def annotation_content(self):
+        return self._annotation_data
+
+    @annotation_content.setter
+    def annotation_content(self, annotation):
+        self._annotation_data = annotation
+
+    # def set_meta(self, annotation: list) -> None:
+    #     self.meta = annotation
+
+    def find_by_schema_id(self, content, schema_id: str):
+        """
+        Return all datapoints matching a schema id.
+        :param content: annotation content tree
+        :param schema_id: f
+        :return: the list of datapoints matching the schema ID
+        """
+        accumulator = []
+        for node in content:
+            if node["schema_id"] == schema_id:
+                accumulator.append(node)
+            elif "children" in node:
+                accumulator.extend(self.find_by_schema_id(node["children"], schema_id))
+
+        return accumulator
+
     def get_positions(self, field_id):
         position_data = []
-        field_id_data = self.find_by_schema_id(self.content_data, field_id)
+        field_id_data = self.find_by_schema_id(self.annotation_content, field_id)
         if field_id_data != []:
             for result in field_id_data:
                 content = result["content"]

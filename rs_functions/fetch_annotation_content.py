@@ -1,6 +1,6 @@
 import rs_classes.async_request_client as async_client
 from rs_functions.gather_decorator import gather_throttled
-
+from rs_classes import annotation
 
 async def get_annotation_content(
     client: async_client.AsyncRequestClient,
@@ -20,9 +20,7 @@ async def get_annotation_content(
     for key, annotation_content in zip(
         annotations_collection.keys(), annotation_contents
     ):
-        obj = annotations_collection[key]
-        content = annotation_content
-        content = content["content"]
-        obj.set_content(content)
+        obj = annotations_collection[key]        
+        obj.annotation_content = annotation_content["content"]
 
     return annotations_collection

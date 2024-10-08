@@ -7,18 +7,21 @@ def form_dataset_for_text_value_analysis(
     obj: annotation.Annotation, key: str, field_id: str
 ) -> pd.DataFrame:
     temp_list = []
+
+    metadata = obj.metadata
+
     if field_id.split(".")[0] == "meta":
         temp_list.append(
             {
                 "IDs": key, 
-                field_id: obj.meta.get(field_id.split(".")[1], None)
+                field_id: metadata.get(field_id.split(".")[1], None)
             }
         )
         temp_df = pd.DataFrame(temp_list)
         temp_df.set_index("IDs", inplace=True)
         return temp_df
     else:        
-        datapoints = obj.find_by_schema_id(obj.content_data, field_id)
+        datapoints = obj.find_by_schema_id(obj.annotation_content, field_id)
         if datapoints:
             for datapoint in datapoints:
                 content_value = datapoint["content"]["value"]
