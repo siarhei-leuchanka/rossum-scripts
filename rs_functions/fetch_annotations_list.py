@@ -7,11 +7,11 @@ import asyncio
 async def search_with_query(
     client: async_client, query: json, allPages: bool = False, page_max=None
 ) -> dict:
-    annotation_library = {}
+    annotation_collection = {}
     next, response = await client._search(params=query)
 
     for result in response:
-        annotation_library[result["id"]] = annotation.Annotation(result)
+        annotation_collection[result["id"]] = annotation.Annotation(result)
 
     page_count = 1
 
@@ -25,7 +25,7 @@ async def search_with_query(
                 await asyncio.sleep(5)
             next, response = await client._search(params=query, next_page=next)
             for result in response:
-                annotation_library[result["id"]] = annotation.Annotation(result)
+                annotation_collection[result["id"]] = annotation.Annotation(result)
             page_count += 1
 
-    return annotation_library
+    return annotation_collection

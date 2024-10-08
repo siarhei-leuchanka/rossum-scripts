@@ -5,7 +5,7 @@ from rs_classes import annotation
 async def get_annotation_content(
     client: async_client.AsyncRequestClient,
     annotations_collection: dict,
-) -> dict:
+) -> None:
     # Create a list of coroutines for fetching annotation content
     annotation_tasks = [
         client._get_annotation_content(key) for key in annotations_collection.keys()
@@ -23,4 +23,3 @@ async def get_annotation_content(
         obj = annotations_collection[key]        
         obj.annotation_content = annotation_content["content"]
 
-    return annotations_collection

@@ -16,7 +16,7 @@ async def pages_data(client: async_client.AsyncRequestClient, annotation_id) -> 
 
 async def get_annotations_page(
     client: async_client.AsyncRequestClient, annotations_collection: dict
-) -> dict:
+) -> None:
     # now creating a list of new coroutines to get page data
     pages_tasks = [pages_data(client, key) for key in annotations_collection.keys()]
 
@@ -30,4 +30,3 @@ async def get_annotations_page(
         obj = annotations_collection[key]
         obj.page_data = annotation_page
 
-    return annotations_collection
