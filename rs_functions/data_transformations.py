@@ -12,16 +12,13 @@ def form_dataset_for_text_value_analysis(
 
     if field_id.split(".")[0] == "meta":
         temp_list.append(
-            {
-                "IDs": key, 
-                field_id: metadata.get(field_id.split(".")[1], None)
-            }
+            {"IDs": key, field_id: metadata.get(field_id.split(".")[1], None)}
         )
         temp_df = pd.DataFrame(temp_list)
         temp_df.set_index("IDs", inplace=True)
         return temp_df
-    else:        
-        datapoints = obj.find_by_schema_id(obj.annotation_content, field_id)
+    else:
+        datapoints = find_by_schema_id(obj.annotation_content, field_id)
         if datapoints:
             for datapoint in datapoints:
                 content_value = datapoint["content"]["value"]
@@ -31,7 +28,9 @@ def form_dataset_for_text_value_analysis(
                     and content_value != ""
                     else ""
                 )
-                temp_list.append({"IDs": key, field_id: f"{content_value}{position_check}"})
+                temp_list.append(
+                    {"IDs": key, field_id: f"{content_value}{position_check}"}
+                )
             temp_df = pd.DataFrame(temp_list)
             temp_df.set_index("IDs", inplace=True)
             return temp_df
@@ -58,14 +57,74 @@ def text_value_analysis(
     return output
 
 
+def find_by_schema_id(content, schema_id: str):
+    """
+    Return all datapoints matching a schema id.
+    :param content: annotation content tree
+    :param schema_id: f
+    :return: the list of datapoints matching the schema ID
+    """
+    accumulator = []
+    for node in content:
+        if node["schema_id"] == schema_id:
+            accumulator.append(node)
+        elif "children" in node:
+            accumulator.extend(find_by_schema_id(node["children"], schema_id))
+
+    return accumulator
+
+
+def get_positions(annotation, field_id):
+    position_data = []
+    field_id_data = find_by_schema_id(annotation.annotation_content, field_id)
+    if field_id_data != []:
+        for result in field_id_data:
+            content = result["content"]
+            position_data.append(
+                {
+                    "annotation_id": annotation.id,
+                    "field_id": field_id,
+                    "page": content.get("page", None),
+                    "x1": content["position"][0]
+                    if content.get("position", None)
+                    else None,
+                    "y1": content["position"][1]
+                    if content.get("position", None)
+                    else None,
+                    "x2": content["position"][2]
+                    if content.get("position", None)
+                    else None,
+                    "y2": content["position"][3]
+                    if content.get("position", None)
+                    else None,
+                    "status": "exists",
+                }
+            )
+    else:
+        position_data.append(
+            {
+                "annotation_id": annotation.id,
+                "field_id": field_id,
+                "page": None,
+                "x1": None,
+                "y1": None,
+                "x2": None,
+                "y2": None,
+                "status": "absent_in_schema",
+            }
+        )
+
+    return position_data
+
+
 def position_analysis(annotations_collection, field_id, slicer_field_id):
     output = pd.DataFrame()
-    for key, obj in annotations_collection.items():
+    for obj in annotations_collection.values():
         df = pd.DataFrame()
         pages_df = pd.DataFrame(obj.page_data)
-        positions = obj.get_positions(field_id)
-        slicer = obj.find_by_schema_id(
-            obj.content_data, slicer_field_id
+        positions = get_positions(obj, field_id)
+        slicer = find_by_schema_id(
+            obj.annotation_content, slicer_field_id
         )  ##ugly hot fix for header only fields
         if slicer:
             slicer = slicer[0]

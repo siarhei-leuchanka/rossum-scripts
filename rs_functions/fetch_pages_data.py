@@ -2,7 +2,7 @@ import rs_classes.async_request_client as async_client
 from rs_functions.gather_decorator import gather_throttled
 
 
-async def pages_data(client: async_client.AsyncRequestClient, annotation_id)-> list:
+async def pages_data(client: async_client.AsyncRequestClient, annotation_id) -> list:
     # get all pages data:
     pages_data = []
     next, response = await client._get_pages(annotation_id)
@@ -16,21 +16,18 @@ async def pages_data(client: async_client.AsyncRequestClient, annotation_id)-> l
 
 async def get_annotations_page(
     client: async_client.AsyncRequestClient, annotations_collection: dict
-)-> dict:
+) -> dict:
     # now creating a list of new coroutines to get page data
     pages_tasks = [pages_data(client, key) for key in annotations_collection.keys()]
 
-    # Execute all annotation content fetching tasks concurrently
-    # annotation_pages = await asyncio.gather(*pages_tasks)
-    
     # Home baked primitive throttling
     annotation_pages = await gather_throttled(
-       tasks=pages_tasks, sleep_limit=100, sleep_time=1
+        tasks=pages_tasks, sleep_limit=100, sleep_time=1
     )
 
     # Update annotation objects with fetched pages
     for key, annotation_page in zip(annotations_collection.keys(), annotation_pages):
         obj = annotations_collection[key]
-        obj.set_page_data = annotation_page
+        obj.page_data = annotation_page
 
     return annotations_collection
