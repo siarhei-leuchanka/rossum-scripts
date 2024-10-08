@@ -10,7 +10,7 @@ async def get_email_content(
     annotation_tasks = {} 
     for annotation in annotations_collection:
           
-        for email_id in annotation.get_related_email_ids:
+        for email_id in annotation.related_email_ids:
             task = client._get_email(email_id)
             annotation_tasks[(annotation,email_id)] = task
 
@@ -23,7 +23,7 @@ async def get_email_content(
     for (annotation, email_id) in annotation_tasks.keys():
         for email_content in annotation_related_emails:            
             if int(email_content["id"]) == int(email_id):
-                annotation.set_related_emails(email_content)
+                annotation.related_emails = email_content
             
     return annotation_related_emails
     
