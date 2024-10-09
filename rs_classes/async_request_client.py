@@ -91,3 +91,11 @@ class AsyncRequestClient:
         next_page = pagination.get("next", False)
 
         return next_page, response["results"]
+    
+    async def _get_email(self, email_id: str) -> dict:
+        endpoint = f"/emails/{email_id}"
+        response = await self._make_request(
+            "GET", endpoint, cache_on=True
+        )
+        
+        return response
