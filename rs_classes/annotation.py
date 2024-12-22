@@ -7,6 +7,7 @@ class Annotation:
         self._page_data = []
         self._related_emails = []
         self._annotation_data = None
+        self._related_hooks = []
 
     @property
     def id(self):
@@ -67,3 +68,11 @@ class Annotation:
     @annotation_content.setter
     def annotation_content(self, annotation):
         self._annotation_data = annotation
+
+    @property
+    def related_hooks(self):
+        return self._related_hooks
+    
+    @related_hooks.setter
+    def related_hooks(self, hooks):
+        self._related_hooks = hooks

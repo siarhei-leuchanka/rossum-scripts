@@ -43,13 +43,13 @@ class AsyncRequestClient:
     async def _make_request(
         self,
         method,
-        endpoint,
+        endpoint=None,
         headers=None,
         data=None,
         json=None,
         files=None,
         cache_on=True,
-        ready_url=None,
+        ready_url=None
     ):
         url = ready_url or f"{self.base_url}/v1{endpoint}"
         headers = headers or AsyncRequestClient.HEADERS
@@ -124,4 +124,18 @@ class AsyncRequestClient:
         endpoint = f"/emails/{email_id}"
         response = await self._make_request("GET", endpoint, cache_on=True)
 
+        return response
+    
+    async def _get_queue(self, queue_id: str) -> dict:
+        endpoint = f"/queues/{queue_id}"
+        response = await self._make_request("GET", endpoint, cache_on=True)
+
+        return response
+
+    async def _get_hook(self, hook_id:str=None, hook_url:str=None) -> dict:
+        if hook_url:
+            response = await self._make_request("GET", ready_url=hook_url, cache_on=True)
+        else:
+            endpoint = f"/hooks/{hook_id}"
+            response = await self._make_request("GET", endpoint, cache_on=True)     
         return response
