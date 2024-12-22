@@ -4,9 +4,21 @@ from rs_classes import annotation as annotation
 import ipywidgets as widgets
 
 
+# Function to handle input widgest
+def update_client(token_input, dropdown, url_input, client) -> None:
+    if dropdown.label == "prod-eu2":
+        url = f"https://{url_input.value}{dropdown.value}/api"
+    else:
+        url = f"{dropdown.value}"
+    client.token = token_input
+    client.base_url = url
+
+
 # Function to create input widgets for a given set number
 def create_input_widgets() -> widgets:
-    url_input = widgets.Textarea(value="", description="Custom Domain:")
+    url_input = widgets.Textarea(
+        value="", description="Custom Domain:", style={"description_width": "initial"}
+    )
     bool_toggle = widgets.ToggleButtons(
         options=[True, False],
         description="Load all pages of annotations:",
@@ -15,14 +27,36 @@ def create_input_widgets() -> widgets:
     )
 
     options_with_labels = {
-        "prod-eu": "https://elis.rossum.ai",
-        "prod-jp": "https://shared-jp.app.rossum.ai",
+        "select cluster": None,
+        "prod-eu": "https://elis.rossum.ai/api",
+        "prod-jp": "https://shared-jp.app.rossum.ai/api",
         "prod-eu2": ".rossum.app",
-        "prod-us": "https://us.app.rossum.ai",
+        "prod-us": "https://us.app.rossum.ai/api",
     }
     dropdown = widgets.Dropdown(options=options_with_labels, description="Environment:")
 
     return url_input, bool_toggle, dropdown
+
+
+# Widgets for load using Annotations
+def create_annotation_ids_widgts() -> widgets:
+    # Create the buttons for Yes and No
+    yes_no_buttons = widgets.ToggleButtons(
+        options=["No", "Yes"],
+        description="Do you want to load using list of annotation ids?",
+        value="No",  # Default is No
+    )
+
+    # Create a text box for annotation ids (hidden by default)
+    annotation_text_box = widgets.Textarea(
+        value="",
+        placeholder="Enter annotation IDs. Comma or new-line separated",
+        description="Annotation IDs:",
+        disabled=True,  # Initially disabled
+        layout=widgets.Layout(width="250px", height="100px"),
+        style={"description_width": "initial"},
+    )
+    return yes_no_buttons, annotation_text_box
 
 
 def form_dataset_for_text_value_analysis(
