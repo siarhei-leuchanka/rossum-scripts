@@ -139,3 +139,44 @@ class AsyncRequestClient:
             endpoint = f"/hooks/{hook_id}"
             response = await self._make_request("GET", endpoint, cache_on=True)     
         return response
+    
+    async def _get_all_users(self, next_page=False) -> dict:
+        endpoint = f"/users"
+        response = await self._make_request("GET", endpoint, ready_url= next_page, cache_on=False)
+
+        pagination = response["pagination"]
+        next_page = pagination.get("next", False)
+        print(pagination)
+
+        return next_page, response["results"]
+    
+    async def get_all_users(self) -> list:
+        # get all pages data:
+        pages_data = []
+        next, response = await self._get_all_users()
+        pages_data.extend(response)
+
+        while next:
+            next, response = await self._get_all_users(next_page=next)
+            pages_data.extend(response)
+        return pages_data
+    
+    async def create_new_user(self, data):
+        endpoint = f"/users"
+        response = await self._make_request("POST", endpoint, json=data, cache_on=False)
+
+        return response
+    
+    async def reset_password(self, email):
+        endpoint = f"/auth/password/reset"
+        data = {"email": email}
+        response = await self._make_request("POST", endpoint, json=data, cache_on=False)
+
+        return response
+    
+    async def change_part_user(self, user_id, data):
+        endpoint = f"/users/{user_id}"
+        response = await self._make_request("PATCH", endpoint, json=data, cache_on=False)
+
+        return response
+            
