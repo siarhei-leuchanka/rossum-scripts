@@ -6,7 +6,7 @@ from rs_functions.gather_decorator import gather_throttled
 
 async def collect_hooks_per_annotation(client:async_client, annotations_collection):
 
-    print("\033[34mCollection Hooks\033[0m")
+    print("\033[33mCollecting Hooks\033[0m")
     hooks_list = []
     for annotation_id, annotation in annotations_collection.items():    
         queue_data = await client._get_queue(annotation.queue)
@@ -14,10 +14,6 @@ async def collect_hooks_per_annotation(client:async_client, annotations_collecti
         hooks_list.extend(annotation.related_hooks)
 
     hooks = hs.HookManager()
-
-    # for hook in list(set(hooks_list)):    
-    #     hook_data = await client._get_hook(hook_url=hook)
-    #     hooks.add_hook(hook_data)
 
     hooks_tasks = [client._get_hook(hook_url=hook) for hook in list(set(hooks_list))]
 

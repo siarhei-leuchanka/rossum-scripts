@@ -28,25 +28,30 @@ class Hook:
         self.hook_template = kwargs.get('hook_template')
         self.modified_by = kwargs.get('modified_by')
         self.modified_at = kwargs.get('modified_at', datetime.now().isoformat())
+    
+    def __getattr__(self, name):
+        if name in self.__dict__:
+            return self.__dict__[name]
+        raise AttributeError(f"'Hook' object has no attribute '{name}'")
 
 class HookManager:
     def __init__(self):
         self.hooks = {}
 
-    def add_hook(self, hook_data):
-        hook_id = hook_data.get('id')
+    def add_hook(self, hook_data:dict):
+        hook_id = str(hook_data.get('id'))
         if hook_id in self.hooks:
             raise ValueError(f"Hook with ID {hook_id} already exists")
         hook = Hook(hook_id, **hook_data)
         self.hooks[hook_id] = hook
 
-    def remove_hook(self, hook_id):
+    def remove_hook(self, hook_id:str):
         if hook_id in self.hooks:
             del self.hooks[hook_id]
         else:
             raise ValueError(f"Hook with ID {hook_id} not found")
 
-    def get_hook(self, hook_id):
+    def get_hook(self, hook_id:str):
         return self.hooks.get(hook_id)
 
     # def load_hook_from_json(self, json_data):

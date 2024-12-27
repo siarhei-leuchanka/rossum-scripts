@@ -179,4 +179,32 @@ class AsyncRequestClient:
         response = await self._make_request("PATCH", endpoint, json=data, cache_on=False)
 
         return response
-            
+    
+    async def data_storage_find(self, collectionName:str, query:dict, projection:dict={}, skip:int=0, limit:int=0, sort:dict={}):        
+        url = "/".join(self._base_url.split("/")[:-1]) + "/svc/data-storage/api/v1/data/find"
+
+        data = {
+            "collectionName": collectionName,
+            "query": query,
+            "projection": projection,
+            "skip": skip,
+            "limit": limit,
+            "sort": sort}
+        
+        response = await self._make_request("POST", ready_url = url, json=data, cache_on=False)   
+
+        return response
+
+    async def data_storage_aggregate(self, collectionName:str, pipeline:list[dict], collation:dict={}, let: dict={}, options:dict={}):
+
+        url = "/".join(self._base_url.split("/")[:-1]) + "/svc/data-storage/api/v1/data/aggregate"        
+        data = {
+            "collectionName": collectionName,
+            "pipeline": pipeline,
+            "collation": collation,
+            "let": let,
+            "options": options} 
+
+        response = await self._make_request("POST", ready_url=url, json=data, cache_on=False)
+
+        return response    
