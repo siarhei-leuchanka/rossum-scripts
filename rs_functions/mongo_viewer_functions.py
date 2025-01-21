@@ -36,10 +36,11 @@ def find_and_replace_placeholder(json_obj, content:str):
         field_id_regex = re.search(r"\{[^|{}]+\s*\|\s*regex\}", json_obj)
                 
         if field_id:            
-            replacement_value = find_by_schema_id(content, json_obj.strip("{}"))[0]["content"]["value"]
-        
-            # Replace the value in place (directly modify the input string in the JSON structure)
-            return replacement_value
+            replacement_value = find_by_schema_id(content, json_obj.strip(" ").strip("{}"))            
+            if replacement_value:
+                return replacement_value[0]["content"]["value"]            
+            else:
+                return ""
 
         elif field_id_regex:            
             match = re.match(r"\{([\w,\d]+)", field_id_regex.group(0))
