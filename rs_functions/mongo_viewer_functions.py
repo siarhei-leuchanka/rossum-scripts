@@ -1,15 +1,14 @@
 # mongo_viewer_functions.py
 import rs_classes.async_request_client as async_client
-import rs_classes.hooks as hs 
-from rs_functions.gather_decorator import gather_throttled 
+import rs_classes.hooks as hs
+from rs_functions.gather_decorator import gather_throttled
 import re
 
 
-async def collect_hooks_per_annotation(client:async_client, annotations_collection):
-
+async def collect_hooks_per_annotation(client: async_client, annotations_collection):
     print("\033[33mCollecting Hooks\033[0m")
     hooks_list = []
-    for annotation_id, annotation in annotations_collection.items():    
+    for annotation_id, annotation in annotations_collection.items():
         queue_data = await client._get_queue(annotation.queue)
         annotation.related_hooks = queue_data.get("hooks", [])
         hooks_list.extend(annotation.related_hooks)
@@ -29,29 +28,39 @@ async def collect_hooks_per_annotation(client:async_client, annotations_collecti
 
     return hooks
 
-def find_and_replace_placeholder(json_obj, content:str):    
-    if isinstance(json_obj, str):                
+
+def find_and_replace_placeholder(json_obj, content: str):
+    if isinstance(json_obj, str):
         # Match the placeholder pattern
         field_id = re.match(r"({(\s*[\w-]+(\s*\|\s*[^}]*)?)})", json_obj)
         field_id_regex = re.search(r"\{[^|{}]+\s*\|\s*regex\}", json_obj)
-                
-        if field_id:            
-            replacement_value = find_by_schema_id(content, json_obj.strip(" ").strip("{}"))            
-            if replacement_value:
-                return replacement_value[0]["content"]["value"]            
-            else:
-                return ""
 
-        elif field_id_regex:            
+        if field_id:
+            replacement_value = find_by_schema_id(
+                content, json_obj.strip(" ").strip("{}")
+            )
+
+            if len(replacement_value) == 1:
+                item = replacement_value[0]["content"]["value"]
+                if item:
+                    return item
+                else:
+                    return " "  # terrible fix
+            else:
+                raise IndexError  # not supporting multivalue fields for now.
+
+        elif field_id_regex:
             match = re.match(r"\{([\w,\d]+)", field_id_regex.group(0))
-            replacement_value = find_by_schema_id(content, match.group(1))[0]["content"]["value"]        
+            replacement_value = find_by_schema_id(content, match.group(1))[0][
+                "content"
+            ]["value"]
 
             return re.sub(r"\{[^|{}]+\s*\|\s*regex\}", replacement_value, json_obj)
-        
+
     elif isinstance(json_obj, list):
-        for i, item in enumerate(json_obj):            
+        for i, item in enumerate(json_obj):
             json_obj[i] = find_and_replace_placeholder(item, content)
-        
+
     elif isinstance(json_obj, dict):
         for key, value in json_obj.items():
             json_obj[key] = find_and_replace_placeholder(value, content)
