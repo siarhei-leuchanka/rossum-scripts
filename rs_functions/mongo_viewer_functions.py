@@ -29,23 +29,21 @@ async def collect_hooks_per_annotation(client: async_client, annotations_collect
     return hooks
 
 
-def find_and_replace_placeholder(json_obj, content: str):
+def find_and_replace_placeholder(json_obj, content: str):    
     if isinstance(json_obj, str):
         # Match the placeholder pattern
-        field_id = re.match(r"({(\s*[\w-]+(\s*\|\s*[^}]*)?)})", json_obj)
-        field_id_regex = re.search(r"\{[^|{}]+\s*\|\s*regex\}", json_obj)
-
-        if field_id:
+        field_id = re.search(r"({(\s*[\w-]+(\s*\|\s*[^}]*)?)})", json_obj)
+        field_id_regex = re.search(r"\{[^|{}]+\s*\|\s*regex\}", json_obj)        
+        if field_id and not field_id_regex:
             replacement_value = find_by_schema_id(
-                content, json_obj.strip(" ").strip("{}")
+                content, field_id.group(2).strip(" ").strip("{}")
             )
-
             if len(replacement_value) == 1:
                 item = replacement_value[0]["content"]["value"]
-                if item:
-                    return item
+                if item:                    
+                    return re.sub(field_id.group(1), item, json_obj)
                 else:
-                    return " "  # terrible fix
+                    return re.sub(field_id.group(1), " ", json_obj)  # terrible fix
             else:
                 raise IndexError  # not supporting multivalue fields for now.
 
