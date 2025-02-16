@@ -49,7 +49,7 @@ class AsyncRequestClient:
         json=None,
         files=None,
         cache_on=True,
-        ready_url=None
+        ready_url=None,
     ):
         url = ready_url or f"{self.base_url}/v1{endpoint}"
         headers = headers or AsyncRequestClient.HEADERS
@@ -70,7 +70,7 @@ class AsyncRequestClient:
                     json=json,
                 ) as response:
                     print(url, "  Request")
-                    if response.status == 200:
+                    if response.status == 200 or response.status == 201:
                         self.request_cache[url] = {
                             "response": await response.json(),
                             "json": json,
@@ -125,31 +125,34 @@ class AsyncRequestClient:
         response = await self._make_request("GET", endpoint, cache_on=True)
 
         return response
-    
+
     async def _get_queue(self, queue_id: str) -> dict:
         endpoint = f"/queues/{queue_id}"
         response = await self._make_request("GET", endpoint, cache_on=True)
 
         return response
 
-    async def _get_hook(self, hook_id:str=None, hook_url:str=None) -> dict:
+    async def _get_hook(self, hook_id: str = None, hook_url: str = None) -> dict:
         if hook_url:
-            response = await self._make_request("GET", ready_url=hook_url, cache_on=True)
+            response = await self._make_request(
+                "GET", ready_url=hook_url, cache_on=True
+            )
         else:
             endpoint = f"/hooks/{hook_id}"
-            response = await self._make_request("GET", endpoint, cache_on=True)     
+            response = await self._make_request("GET", endpoint, cache_on=True)
         return response
-    
+
     async def _get_all_users(self, next_page=False) -> dict:
         endpoint = f"/users"
-        response = await self._make_request("GET", endpoint, ready_url= next_page, cache_on=False)
+        response = await self._make_request(
+            "GET", endpoint, ready_url=next_page, cache_on=False
+        )
 
         pagination = response["pagination"]
         next_page = pagination.get("next", False)
-        print(pagination)
 
         return next_page, response["results"]
-    
+
     async def get_all_users(self) -> list:
         # get all pages data:
         pages_data = []
@@ -160,28 +163,82 @@ class AsyncRequestClient:
             next, response = await self._get_all_users(next_page=next)
             pages_data.extend(response)
         return pages_data
-    
+
     async def create_new_user(self, data):
         endpoint = f"/users"
         response = await self._make_request("POST", endpoint, json=data, cache_on=False)
 
         return response
-    
+
     async def reset_password(self, email):
         endpoint = f"/auth/password/reset"
         data = {"email": email}
         response = await self._make_request("POST", endpoint, json=data, cache_on=False)
 
         return response
-    
+
     async def change_part_user(self, user_id, data):
         endpoint = f"/users/{user_id}"
-        response = await self._make_request("PATCH", endpoint, json=data, cache_on=False)
+        response = await self._make_request(
+            "PATCH", endpoint, json=data, cache_on=False
+        )
 
         return response
-    
-    async def data_storage_find(self, collectionName:str, query:dict, projection:dict={}, skip:int=0, limit:int=0, sort:dict={}):        
-        url = "/".join(self._base_url.split("/")[:-1]) + "/svc/data-storage/api/v1/data/find"
+
+    async def _get_all_queues(self, next_page=False) -> dict:
+        endpoint = f"/queues"
+        response = await self._make_request(
+            "GET", endpoint, ready_url=next_page, cache_on=False
+        )
+
+        pagination = response["pagination"]
+        next_page = pagination.get("next", False)
+
+        return next_page, response["results"]
+
+    async def get_all_queues(self) -> list:
+        pages_data = []
+        next, response = await self._get_all_queues()
+        pages_data.extend(response)
+
+        while next:
+            next, response = await self._get_all_queues(next_page=next)
+            pages_data.extend(response)
+        return pages_data
+
+    async def _get_groups(self) -> dict:
+        endpoint = f"/groups"
+        response = await self._make_request("GET", endpoint, cache_on=True)
+
+        pagination = response["pagination"]
+        next_page = pagination.get("next", False)
+
+        return next_page, response["results"]
+
+    async def get_all_groups(self, next_page=False) -> dict:
+        pages_data = []
+        next, response = await self._get_groups()
+
+        pages_data.extend(response)
+
+        while next:
+            next, response = await self._get_groups(next_page=next)
+            pages_data.extend(response)
+        return pages_data
+
+    async def data_storage_find(
+        self,
+        collectionName: str,
+        query: dict,
+        projection: dict = {},
+        skip: int = 0,
+        limit: int = 0,
+        sort: dict = {},
+    ):
+        url = (
+            "/".join(self._base_url.split("/")[:-1])
+            + "/svc/data-storage/api/v1/data/find"
+        )
 
         data = {
             "collectionName": collectionName,
@@ -189,22 +246,37 @@ class AsyncRequestClient:
             "projection": projection,
             "skip": skip,
             "limit": limit,
-            "sort": sort}
-        
-        response = await self._make_request("POST", ready_url = url, json=data, cache_on=False)   
+            "sort": sort,
+        }
+
+        response = await self._make_request(
+            "POST", ready_url=url, json=data, cache_on=False
+        )
 
         return response
 
-    async def data_storage_aggregate(self, collectionName:str, pipeline:list[dict], collation:dict={}, let: dict={}, options:dict={}):
-
-        url = "/".join(self._base_url.split("/")[:-1]) + "/svc/data-storage/api/v1/data/aggregate"        
+    async def data_storage_aggregate(
+        self,
+        collectionName: str,
+        pipeline: list[dict],
+        collation: dict = {},
+        let: dict = {},
+        options: dict = {},
+    ):
+        url = (
+            "/".join(self._base_url.split("/")[:-1])
+            + "/svc/data-storage/api/v1/data/aggregate"
+        )
         data = {
             "collectionName": collectionName,
             "pipeline": pipeline,
             "collation": collation,
             "let": let,
-            "options": options}   
-              
-        response = await self._make_request("POST", ready_url=url, json=data, cache_on=False)
+            "options": options,
+        }
 
-        return response    
+        response = await self._make_request(
+            "POST", ready_url=url, json=data, cache_on=False
+        )
+
+        return response
