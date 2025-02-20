@@ -6,7 +6,7 @@ import copy
 
 
 TOKEN = input("Please enter your Rossum API token: ")
-DOMAIN = input("Please enter Rossum domain url: ")
+DOMAIN = input("Please enter Rossum domain url without /v1: ")
 ORGANZATION_ID = input("What is the target Organization ID: ")
 ORGANIZATION = f"{DOMAIN}/v1/organizations/{ORGANZATION_ID}"
 UPLOAD_FILE_PATH = input("Provide a path to load file: ")
