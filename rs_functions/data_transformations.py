@@ -10,6 +10,12 @@ def update_client(token_input, dropdown, url_input, client) -> None:
         url = f"https://{url_input.value}{dropdown.value}/api"
     else:
         url = f"{dropdown.value}"
+
+    # if url_input.value is not None:
+    #     url = f"https://{url_input.value}{dropdown.value}"
+    # else:
+    #     url = f"{dropdown.value}"    
+
     client.token = token_input
     client.base_url = url
 
