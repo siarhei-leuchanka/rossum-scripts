@@ -33,6 +33,10 @@ async def collect_hooks_per_annotation(client: async_client, annotations_collect
 
 
 def find_and_replace_placeholder(json_obj, content: str):    
+    """
+     TODO: refactor completely to take into consideration | re and | regex within the same findall. Reuse the same codebase as in MDH? 
+     TODO: add line items support
+    """
     if isinstance(json_obj, str):
         # Match the placeholder pattern
         field_id = re.findall(r"({(\s*[\w-]+(\s*\|\s*[^}]*)?)})", json_obj)        
