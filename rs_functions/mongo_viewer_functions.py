@@ -40,29 +40,29 @@ def find_and_replace_placeholder(json_obj, content: str):
     if isinstance(json_obj, str):
         # Match the placeholder pattern
         field_id = re.findall(r"({(\s*[\w-]+(\s*\|\s*[^}]*)?)})", json_obj)        
-        field_id_regex = re.search(r"\{[^|{}]+\s*\|\s*regex\}", json_obj)        
+        field_id_regex = re.search(r"\{[^|{}]+\s*\|\s*regex|\s*re\}", json_obj)        
         if field_id and not field_id_regex:
             for replacement in field_id:            
                 replacement_value = find_by_schema_id(
                     content, replacement[1].strip(" ").strip("{}")
-                )
-                if len(replacement_value) == 1:
+                )                
+                if len(replacement_value) <= 1:
                     item = replacement_value[0]["content"]["value"]
                     if item:                    
                         json_obj =  re.sub(replacement[0], item, json_obj)
                     else:
                         json_obj = re.sub(replacement[0], " ", json_obj)  # terrible fix
-                else:
+                else:                    
                     raise IndexError("Multivalue fields are not supported.")                
             return json_obj
 
         elif field_id_regex:
-            match = re.match(r"\{([\w,\d]+)", field_id_regex.group(0))
+            match = re.match(r"\{([\w,\d]+)", json_obj)            
             replacement_value = find_by_schema_id(content, match.group(1))[0][
                 "content"
             ]["value"]
 
-            return re.sub(r"\{[^|{}]+\s*\|\s*regex\}", replacement_value, json_obj)
+            return re.sub(r"\{([\w,\d]+)", replacement_value, json_obj)
 
     elif isinstance(json_obj, list):
         for i, item in enumerate(json_obj):
@@ -114,8 +114,7 @@ def extract_valid_queries_for_analysis(mdh_hooks_per_annotation,CHECK_QUEUE_IDS_
             excluded_queue_ids = configuration.get("excluded_queue_ids", [])
             #TODO: check conditiion. 
             
-            if CHECK_QUEUE_IDS_LIMITATIONS and queue_ids and (int(annotation.queue) not in queue_ids or int(annotation.queue) in excluded_queue_ids):
-                print("Filtered by Queue ID")
+            if CHECK_QUEUE_IDS_LIMITATIONS and queue_ids and (int(annotation.queue) not in queue_ids or int(annotation.queue) in excluded_queue_ids):                
                 continue
             
             if TARGET_SCHEMA_ID == configuration["mapping"]["target_schema_id"] or TARGET_SCHEMA_ID == additional_mappings.get("target_schema_id"):            
