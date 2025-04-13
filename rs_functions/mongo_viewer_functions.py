@@ -36,19 +36,21 @@ async def collect_hooks_per_annotation(client: async_client, annotations_collect
 
 def find_and_replace_placeholder(json_obj, content: str):
     """
-    TODO: refactor completely to take into consideration | re and | regex within the same findall. Reuse the same codebase as in MDH?
+    
     TODO: add line items support
+    TODO: consider split filter
+    TODO: consider replacing all regex based fields not only the first one. 
     """
     if isinstance(json_obj, str):
         # Match the placeholder pattern
         field_id = re.findall(r"({(\s*[\w-]+(\s*\|\s*[^}]*)?)})", json_obj)
-        field_id_regex = re.search(r"\{[^|{}]+\s*\|\s*regex|\s*re\}", json_obj)
+        field_id_regex = re.search(r"\{[^|{}]+\s*\|\s*regex|\s*split|\s*re\}", json_obj)
         if field_id and not field_id_regex:
             for replacement in field_id:
                 replacement_value = find_by_schema_id(
                     content, replacement[1].strip(" ").strip("{}")
                 )
-                if len(replacement_value) <= 1:
+                if len(replacement_value) == 1:
                     item = replacement_value[0]["content"]["value"]
                     if item:
                         json_obj = re.sub(replacement[0], item, json_obj)
@@ -59,12 +61,21 @@ def find_and_replace_placeholder(json_obj, content: str):
             return json_obj
 
         elif field_id_regex:
-            match = re.match(r"\{([\w,\d]+)", json_obj)
+            match = re.match(r"\{([\w,\d]+)", json_obj)            
             replacement_value = find_by_schema_id(content, match.group(1))[0][
                 "content"
             ]["value"]
-
-            return re.sub(r"\{([\w,\d]+)", replacement_value, json_obj)
+            escaped_replacement_value = re.escape(replacement_value)
+            print("here", json_obj, escaped_replacement_value)
+            obj_list = []
+            if "split" in json_obj:
+                obj_list.append(replacement_value)
+                json_obj = obj_list # another terrible fix
+            else:
+                json_obj = escaped_replacement_value
+            # return re.sub(r".*", escaped_replacement_value, json_obj, flags=re.DOTALL)
+            
+            return json_obj
 
     elif isinstance(json_obj, list):
         for i, item in enumerate(json_obj):

@@ -10,25 +10,31 @@ import asyncio
 st.set_page_config(layout="wide")
 
 # Streamlit app title
-st.title("Mongo Debugger")
+st.title("Mongo Debugger for Rossum Master Data Hub Extension (MDH)")
+st.warning("⚠️ Disclaimer: This application does not gurantee correctness of the results. Use at your own risk. If you see any issues, please report them to author. Fixes are not guranteed.")
+st.warning("Current version does not support line items. The implementation of 'filters' like ' | re' or ' | regex' are suppoorted naively by re.escape() function. In case regex field has multiple placeholders only the first one will be taken into cosideration. 'split' filter is not supported.")
+st.info("ℹ️ The implementation does not copy the original source code of the extension. The extension is treated as 'black box' and therefore can provide different results. The idea is to debug queries that are added in (MDH) extension.")
+
 
 # Input fields for user configuration
 TOKEN = st.text_input("Enter your API Token:", "")
-BASE_URL = st.text_input("Enter the Base URL:", "https://us.app.rossum.ai/api")
+CLUSTER_URL = st.selectbox("Select the Base URL:", ["https://elis.rossum.ai/api","https://shared-jp.app.rossum.ai/api","https://us.app.rossum.ai/api"], index=2)
+DOMAIN_URL = st.text_input("Enter the Domain URL if used. It will override Base URL above. Example https://d-vegas.rossum.app/api:")
 
+BASE_URL = DOMAIN_URL if DOMAIN_URL else CLUSTER_URL
 client = rs.AsyncRequestClient(TOKEN, BASE_URL)
 
 HOOK_TEMPLATE_ID = st.text_input("Hook Template ID:", "39")
 BREAK_AFTER_SUCCESSFULL_RESULTS = st.checkbox("Break After Successful Results", True)
 # IGNORE_CONDITIONS = st.checkbox("Ignore Conditions", True)
-st.text("Ignore Conditions is not supported yet")
-CHECK_QUEUE_IDS_LIMITATIONS = st.checkbox("Check Queue IDs Limitations", True)
+st.text("Ignore Conditions is not supported yet. Query with conditions will be counted as valid and executed below.")
+CHECK_QUEUE_IDS_LIMITATIONS = st.checkbox("Check Queue IDs Limitations.", True)
 # STAGED_PIPELINE = st.checkbox("Staged Pipeline", False)
 st.text("Staged Pipeline is not supported yet")
 STAGED_PIPELINE = False
 
 TARGET_SCHEMA_ID = st.text_input("Target Schema ID:", "")
-ANNOTATION_LIST = st.text_area("Annotation ID):", "").split(",")
+ANNOTATION_LIST = st.text_area("Annotation ID:", "").split(",")
 st.text(
     "List of annotations is not supported yet. Please use single annotation id for now."
 )
@@ -89,6 +95,8 @@ async def main():
                     )
 
             else:
+                print("Output", query)
+
                 result = await client.data_storage_aggregate(
                     collectionName=dataset, pipeline=query["aggregate"]
                 )
