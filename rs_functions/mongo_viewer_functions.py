@@ -36,10 +36,10 @@ async def collect_hooks_per_annotation(client: async_client, annotations_collect
 
 def find_and_replace_placeholder(json_obj, content: str):
     """
-    
+
     TODO: add line items support
     TODO: consider split filter
-    TODO: consider replacing all regex based fields not only the first one. 
+    TODO: consider replacing all regex based fields not only the first one.
     """
     if isinstance(json_obj, str):
         # Match the placeholder pattern
@@ -61,7 +61,7 @@ def find_and_replace_placeholder(json_obj, content: str):
             return json_obj
 
         elif field_id_regex:
-            match = re.match(r"\{([\w,\d]+)", json_obj)            
+            match = re.match(r"\{([\w,\d]+)", json_obj)
             replacement_value = find_by_schema_id(content, match.group(1))[0][
                 "content"
             ]["value"]
@@ -70,11 +70,11 @@ def find_and_replace_placeholder(json_obj, content: str):
             obj_list = []
             if "split" in json_obj:
                 obj_list.append(replacement_value)
-                json_obj = obj_list # another terrible fix
+                json_obj = obj_list  # another terrible fix
             else:
                 json_obj = escaped_replacement_value
             # return re.sub(r".*", escaped_replacement_value, json_obj, flags=re.DOTALL)
-            
+
             return json_obj
 
     elif isinstance(json_obj, list):
@@ -179,7 +179,7 @@ def extract_valid_queries_for_analysis(
     return queries
 
 
-def visualize_result(query, result, title_text):
+def visualize_result(query, result, title_text, col1_expanded = True, col2_expanded=True):
     # Title
     st.markdown(f"### {title_text}")
 
@@ -189,25 +189,23 @@ def visualize_result(query, result, title_text):
     with col1:
         with st.expander("Reveal:"):
             st.markdown("#### Query")
-            # st.text_area("Query", json.dumps(query, indent=4), height=450, label_visibility="collapsed", key=title_text+"col1")
-            st.json(query, expanded=True)
+            st.json(query, expanded=col1_expanded)
 
     with col2:
         results_number = len(result.get("result", 0))
         st.write(f"Results found: {results_number}")
         st.markdown("#### Result")
         if result and "result" in result and results_number > 0:
-            st.json(result["result"], expanded=True)
+            st.json(result["result"], expanded=col2_expanded)
         else:
             st.write("No result")
 
-    # with col2:
-    #     st.markdown("#### Result (Editable)")
-    #     json_code = json.dumps(result.get("result", "No result"), indent=4) if result else "No result"
-    #     edited = st_ace(
-    #         value=json_code,
-    #         language="json",
-    #         theme="monokai",
-    #         height=450,
-    #         key=title_text + "col2"
-    #     )
+def prepare_pipeline(query):
+    pipeline = []
+
+    for element in range(1, len(query["aggregate"])):
+        pipeline.append(query["aggregate"][0:-element])
+    
+    pipeline.reverse()
+    
+    return pipeline
