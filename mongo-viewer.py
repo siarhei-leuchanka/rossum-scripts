@@ -15,7 +15,7 @@ st.warning(
     "⚠️ Disclaimer: This application does not gurantee correctness of the results. Use at your own risk. If you see any issues, please report them to author. Fixes are not guranteed."
 )
 st.warning(
-    "Current version does not support line items. The implementation of 'filters' like ' | re' or ' | regex' are suppoorted naively by re.escape() function. In case regex field has multiple placeholders only the first one will be taken into cosideration. 'split' filter is not supported."
+    "Current version does not support line items. The implementation of 'filters' like ' | re' or ' | regex' are suppoorted naively by re.escape() function. In case regex field has multiple placeholders only the first one will be taken into cosideration. 'split' filter is not supported. The 'staged pipeline' is not fully tested."
 )
 st.info(
     "ℹ️ The implementation does not copy the original source code of the extension. The extension is treated as 'black box' and therefore can provide different results. The idea is to debug queries that are added in (MDH) extension."
@@ -48,8 +48,6 @@ st.text(
 )
 CHECK_QUEUE_IDS_LIMITATIONS = st.checkbox("Check Queue IDs Limitations.", True)
 STAGED_PIPELINE = st.checkbox("Staged Pipeline", False)
-st.text("Staged Pipeline is not supported yet")
-# STAGED_PIPELINE = False
 
 TARGET_SCHEMA_ID = st.text_input("Target Schema ID:", "")
 ANNOTATION_LIST = st.text_area("Annotation ID:", "").split(",")
