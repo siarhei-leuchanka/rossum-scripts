@@ -65,15 +65,13 @@ def find_and_replace_placeholder(json_obj, content: str):
             replacement_value = find_by_schema_id(content, match.group(1))[0][
                 "content"
             ]["value"]
-            escaped_replacement_value = re.escape(replacement_value)
-            print("here", json_obj, escaped_replacement_value)
+            escaped_replacement_value = re.escape(replacement_value)            
             obj_list = []
             if "split" in json_obj:
                 obj_list.append(replacement_value)
                 json_obj = obj_list  # another terrible fix
             else:
-                json_obj = escaped_replacement_value
-            # return re.sub(r".*", escaped_replacement_value, json_obj, flags=re.DOTALL)
+                json_obj = escaped_replacement_value            
 
             return json_obj
 

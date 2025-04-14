@@ -56,7 +56,7 @@ st.text(
 )
 
 
-async def main():
+async def fetch_data():
     annotations_collection = await fetch_annotations_meta.get_annotation_meta(
         client, ANNOTATION_LIST
     )
@@ -65,6 +65,11 @@ async def main():
     )
 
     hooks = await mvf.collect_hooks_per_annotation(client, annotations_collection)
+
+    return (annotations_collection, hooks)
+
+async def main(annotations_n_hooks):    
+    annotations_collection, hooks = annotations_n_hooks
 
     mdh_hooks_per_annotation = mvf.find_hooks_to_analyse(
         annotations_collection, hooks, HOOK_TEMPLATE_ID
@@ -103,8 +108,7 @@ async def main():
                     )
                     tabs.append(pipeline_result)
                     tab_names.append(f"Stage {i+1}")
-
-                    # mvf.visualize_result(stage[-1], pipeline_result, signature + str(i))
+                    
                 st.write(
                     "More than one stage is found. Preparing data for pipeline view.."
                 )
@@ -139,4 +143,5 @@ def run_async(func):
 
 
 if st.button("Check Annotation"):
-    run_async(main())
+    annotations_n_hooks = asyncio.run(fetch_data())
+    run_async(main(annotations_n_hooks))
