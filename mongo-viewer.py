@@ -101,11 +101,19 @@ async def main(annotations_n_hooks):
 
                 tabs = []
                 tab_names = []
+                
+                for i, stage in enumerate(pipeline):                    
+                    try:
 
-                for i, stage in enumerate(pipeline):
-                    pipeline_result = await client.data_storage_aggregate(
-                        collectionName=dataset, pipeline=stage
-                    )
+                        pipeline_result = await client.data_storage_aggregate(
+                            collectionName=dataset, pipeline=stage
+                        )
+                    except Exception as e:
+                        st.write(f"Error in pipeline stage {i}: {e}")
+                        st.write(f"Skipping the stage - {stage}")
+                        tabs.append({"result": {"Error"}})
+                        tab_names.append(f"Stage {i+1}")
+                        continue                    
                     tabs.append(pipeline_result)
                     tab_names.append(f"Stage {i+1}")
                     
