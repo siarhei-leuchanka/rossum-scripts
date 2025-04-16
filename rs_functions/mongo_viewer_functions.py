@@ -201,9 +201,7 @@ def visualize_result(query, result, title_text, col1_expanded = True, col2_expan
 def prepare_pipeline(query):
     pipeline = []
 
-    for element in range(1, len(query["aggregate"])):
-        pipeline.append(query["aggregate"][0:-element])
-    
-    pipeline.reverse()
-    
+    for element in range(1, len(query["aggregate"])+1):
+        pipeline.append(query["aggregate"][0:element])        
+        
     return pipeline
