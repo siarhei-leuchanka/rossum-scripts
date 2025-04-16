@@ -51,6 +51,8 @@ STAGED_PIPELINE = st.checkbox("Staged Pipeline", False)
 
 TARGET_SCHEMA_ID = st.text_input("Target Schema ID:", "")
 ANNOTATION_LIST = st.text_area("Annotation ID:", "").split(",")
+EXCLUDED_FIRST_STAGES = ["$addFields", "$project", "$lookup", "$unwind", "$set"]
+
 st.text(
     "List of annotations is not supported yet. Please use single annotation id for now."
 )
@@ -104,7 +106,8 @@ async def main(annotations_n_hooks):
                 
                 for i, stage in enumerate(pipeline):                    
                     try:
-
+                        if len(stage) == 1 and any(key in EXCLUDED_FIRST_STAGES for key in stage[0].keys()):
+                            raise Exception("Excluded stage. Long running first stage is not allowed")
                         pipeline_result = await client.data_storage_aggregate(
                             collectionName=dataset, pipeline=stage
                         )
